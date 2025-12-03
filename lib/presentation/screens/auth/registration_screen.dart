@@ -75,7 +75,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.location_city),
                 ),
-                value: _selectedCity,
+                initialValue: _selectedCity,
                 items: _cities.map((city) {
                   return DropdownMenuItem(
                     value: city,
