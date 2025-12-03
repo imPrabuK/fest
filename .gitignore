@@ -62,6 +62,13 @@
 **/ios/ServiceDefinitions.json
 **/ios/Runner/GeneratedPluginRegistrant.*
 
+# Node.js / Backend related
+node_modules/
+**/node_modules/
+.env
+npm-debug.log
+yarn-error.log
+
 # Exceptions to above rules.
 !/android/app/src/main/AndroidManifest.xml
 !/ios/Runner.xcodeproj/project.pbxproj
