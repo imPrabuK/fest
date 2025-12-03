@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../providers/cart_provider.dart';
+import '../../../data/models/cart_item.dart';
 import '../booking/booking_summary_screen.dart';
 
 class ServiceDetailScreen extends StatefulWidget {
@@ -213,30 +216,59 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                   
                   const SizedBox(height: 32),
                   
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        if (_selectedDate == null || _selectedTime == null) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Please select date and time')),
-                          );
-                          return;
-                        }
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => BookingSummaryScreen(
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () {
+                            if (_selectedDate == null || _selectedTime == null) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Please select date and time')),
+                              );
+                              return;
+                            }
+                            // Add to Cart Logic
+                            final cartItem = CartItem(
+                              id: DateTime.now().toString(),
                               serviceName: widget.serviceName,
                               price: widget.price,
                               date: _selectedDate!,
                               time: _selectedTime!,
-                            ),
-                          ),
-                        );
-                      },
-                      child: const Text('Proceed to Book'),
-                    ),
+                            );
+                            Provider.of<CartProvider>(context, listen: false).addItem(cartItem);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Added to Cart')),
+                            );
+                          },
+                          child: const Text('Add to Cart'),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () {
+                            if (_selectedDate == null || _selectedTime == null) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Please select date and time')),
+                              );
+                              return;
+                            }
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => BookingSummaryScreen(
+                                  serviceName: widget.serviceName,
+                                  price: widget.price,
+                                  date: _selectedDate!,
+                                  time: _selectedTime!,
+                                ),
+                              ),
+                            );
+                          },
+                          child: const Text('Book Now'),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),

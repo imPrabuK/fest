@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../providers/user_provider.dart';
 import '../auth/login_screen.dart';
+import 'my_orders_screen.dart';
+import 'payment_methods_screen.dart';
+import 'help_support_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -19,6 +24,10 @@ class ProfileScreen extends StatelessWidget {
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context); // Close dialog
+              
+              // Clear user data
+              Provider.of<UserProvider>(context, listen: false).logout();
+
               // Navigate to Login Screen and remove all previous routes
               Navigator.pushAndRemoveUntil(
                 context,
@@ -54,50 +63,54 @@ class ProfileScreen extends StatelessWidget {
           children: [
             const SizedBox(height: 24),
             // User Info Section
-            Center(
-              child: Column(
-                children: [
-                  Container(
-                    width: 100,
-                    height: 100,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: AppColors.primary.withValues(alpha: 0.1),
-                      border: Border.all(color: AppColors.primary, width: 2),
-                    ),
-                    child: const Icon(
-                      Icons.person,
-                      size: 60,
-                      color: AppColors.primary,
-                    ),
+            Consumer<UserProvider>(
+              builder: (context, user, child) {
+                return Center(
+                  child: Column(
+                    children: [
+                      Container(
+                        width: 100,
+                        height: 100,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: AppColors.primary.withValues(alpha: 0.1),
+                          border: Border.all(color: AppColors.primary, width: 2),
+                        ),
+                        child: const Icon(
+                          Icons.person,
+                          size: 60,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        user.name,
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        user.contactInfo,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        user.city,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Prabu K',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    '+91 98765 43210',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    'Chennai, India',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                ],
-              ),
+                );
+              },
             ),
             
             const SizedBox(height: 32),
@@ -107,25 +120,42 @@ class ProfileScreen extends StatelessWidget {
               context,
               icon: Icons.shopping_bag_outlined,
               title: 'My Orders',
-              onTap: () {},
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const MyOrdersScreen()),
+                );
+              },
             ),
             _buildProfileOption(
               context,
               icon: Icons.location_on_outlined,
               title: 'Saved Addresses',
-              onTap: () {},
+              onTap: () {
+                // TODO: Implement Saved Addresses
+              },
             ),
             _buildProfileOption(
               context,
               icon: Icons.payment_outlined,
               title: 'Payment Methods',
-              onTap: () {},
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const PaymentMethodsScreen()),
+                );
+              },
             ),
             _buildProfileOption(
               context,
               icon: Icons.help_outline,
               title: 'Help & Support',
-              onTap: () {},
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const HelpSupportScreen()),
+                );
+              },
             ),
             
             const SizedBox(height: 24),

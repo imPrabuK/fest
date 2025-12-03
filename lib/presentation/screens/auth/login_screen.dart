@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:email_otp/email_otp.dart';
 import '../../../core/constants/app_colors.dart';
 import 'otp_verification_screen.dart';
 
@@ -11,35 +11,92 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _phoneController = TextEditingController();
+  final _controller = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+  bool _isSending = false;
 
   @override
   void dispose() {
-    _phoneController.dispose();
+    _controller.dispose();
     super.dispose();
   }
 
-  void _sendOtp() {
+  bool _isEmail(String input) {
+    return input.contains('@');
+  }
+
+  Future<void> _sendOtp() async {
     if (_formKey.currentState!.validate()) {
-      // Simulate API call
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Sending OTP...')),
-      );
+      final input = _controller.text.trim();
       
-      Future.delayed(const Duration(seconds: 1), () {
-        if (mounted) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => OtpVerificationScreen(
-                phoneNumber: _phoneController.text,
-              ),
-            ),
-          );
-        }
+      setState(() {
+        _isSending = true;
       });
+
+      try {
+        if (_isEmail(input)) {
+          // Configure Email OTP
+          EmailOTP.config(
+            appName: 'FestFix',
+            otpType: OTPType.numeric,
+            emailTheme: EmailTheme.v1,
+          );
+          
+          // Send Email OTP
+          bool result = await EmailOTP.sendOTP(email: input);
+          if (!mounted) return;
+          
+          if (result) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('OTP sent to your email')),
+            );
+            _navigateToOtp(input, isEmail: true);
+          } else {
+            _showError('Failed to send Email OTP. Please try again.');
+          }
+        } else {
+          // Mobile Number Logic
+          // NOTE: Real SMS requires a paid gateway or Firebase.
+          // For this "Free" implementation, we simulate sending.
+          await Future.delayed(const Duration(seconds: 1)); // Simulate network
+          if (!mounted) return;
+          
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('OTP sent to your mobile (Demo: 1234)')),
+          );
+          _navigateToOtp(input, isEmail: false);
+        }
+      } catch (e) {
+        _showError('Error: $e');
+      } finally {
+        if (mounted) {
+          setState(() {
+            _isSending = false;
+          });
+        }
+      }
     }
+  }
+
+  void _navigateToOtp(String contact, {required bool isEmail}) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => OtpVerificationScreen(
+          contactInfo: contact,
+          isEmail: isEmail,
+        ),
+      ),
+    );
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: AppColors.error,
+      ),
+    );
   }
 
   @override
@@ -65,9 +122,10 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: ClipOval(
                       child: Image.asset(
                         'assets/images/logo.png',
-                        width: 100,
-                        height: 100,
+                        width: 150,
+                        height: 150,
                         fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => const Icon(Icons.celebration, size: 60, color: AppColors.primary),
                       ),
                     ),
                   ),
@@ -104,7 +162,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  'Enter your mobile number to continue',
+                  'Enter Email or Mobile Number',
                   style: TextStyle(
                     color: AppColors.textSecondary,
                   ),
@@ -112,26 +170,30 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 24),
                 
                 TextFormField(
-                  controller: _phoneController,
-                  keyboardType: TextInputType.phone,
-                  inputFormatters: [
-                    FilteringTextInputFormatter.digitsOnly,
-                    LengthLimitingTextInputFormatter(10),
-                  ],
+                  controller: _controller,
+                  keyboardType: TextInputType.emailAddress, // Works for both
                   decoration: InputDecoration(
-                    prefixText: '+91 ',
-                    labelText: 'Mobile Number',
+                    labelText: 'Email or Mobile Number',
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    prefixIcon: const Icon(Icons.phone),
+                    prefixIcon: const Icon(Icons.person),
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter mobile number';
+                      return 'Please enter email or mobile number';
                     }
-                    if (value.length != 10) {
-                      return 'Please enter valid 10 digit number';
+                    final isEmail = value.contains('@');
+                    if (isEmail) {
+                       // Simple Email Validation
+                       if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                         return 'Please enter a valid email';
+                       }
+                    } else {
+                      // Mobile Validation
+                      if (!RegExp(r'^[0-9]{10}$').hasMatch(value)) {
+                        return 'Please enter a valid 10-digit mobile number';
+                      }
                     }
                     return null;
                   },
@@ -143,11 +205,13 @@ class _LoginScreenState extends State<LoginScreen> {
                   width: double.infinity,
                   height: 50,
                   child: ElevatedButton(
-                    onPressed: _sendOtp,
-                    child: const Text(
-                      'Continue',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
+                    onPressed: _isSending ? null : _sendOtp,
+                    child: _isSending 
+                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                      : const Text(
+                          'Continue',
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
                   ),
                 ),
                 const Spacer(),

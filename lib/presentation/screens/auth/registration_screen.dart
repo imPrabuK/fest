@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../providers/user_provider.dart';
 import '../main_screen.dart';
 
 class RegistrationScreen extends StatefulWidget {
@@ -25,7 +27,14 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
   void _register() {
     if (_formKey.currentState!.validate()) {
-      // Mock Registration
+      // Save user details
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      userProvider.setUserDetails(
+        name: _nameController.text.trim(),
+        contactInfo: userProvider.contactInfo, // Keep the contact info from OTP screen
+        city: _selectedCity!,
+      );
+
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (context) => const MainScreen()),
